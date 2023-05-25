@@ -1,0 +1,39 @@
+version: '3.7'
+
+services:
+  customer:
+    image: postgres:12.2-alpine
+    restart: unless-stopped
+    ports:
+      - "5454:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=db
+      - POSTGRES_PASSWORD=db
+      - POSTGRES_DB=db
+  restaurant:
+    image: postgres:12.2-alpine
+    restart: always
+    ports:
+      - "5455:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=db
+      - POSTGRES_PASSWORD=db
+      - POSTGRES_DB=db
+  statistics:
+    image: postgres:12.2-alpine
+    restart: always
+    ports:
+      - "5456:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=db
+      - POSTGRES_PASSWORD=db
+      - POSTGRES_DB=db
+
+volumes:
+  postgres-data:
