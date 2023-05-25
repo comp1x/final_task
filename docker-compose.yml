@@ -3,7 +3,7 @@ version: '3.7'
 services:
   customer:
     image: postgres:12.2-alpine
-    restart: unless-stopped
+    restart: always
     ports:
       - "5454:5432"
     volumes:
