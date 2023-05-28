@@ -7,7 +7,7 @@ services:
     ports:
       - "5454:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-customer:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=db
       - POSTGRES_PASSWORD=db
@@ -18,7 +18,7 @@ services:
     ports:
       - "5455:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-restaurant:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=db
       - POSTGRES_PASSWORD=db
@@ -29,11 +29,13 @@ services:
     ports:
       - "5456:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-statistics:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=db
       - POSTGRES_PASSWORD=db
       - POSTGRES_DB=db
 
 volumes:
-  postgres-data:
+  postgres-customer:
+  postgres-restaurant:
+  postgres-statistics:

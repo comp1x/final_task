@@ -2,7 +2,7 @@ package models
 
 import (
 	"github.com/google/uuid"
-	restaurant "gitlab.com/mediasoft-internship/final-task/contracts/pkg/contracts/restaurant"
+	"gitlab.com/mediasoft-internship/final-task/contracts/pkg/contracts/restaurant"
 	"time"
 )
 

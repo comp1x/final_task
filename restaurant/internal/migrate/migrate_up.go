@@ -33,6 +33,11 @@ func main() {
 	}
 
 	GormDB.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")
-	GormDB.AutoMigrate(&models.Product{})
-	fmt.Println("? Migration complete")
+	err = GormDB.AutoMigrate(&models.Product{})
+	err = GormDB.AutoMigrate(&models.Menu{})
+	if err != nil {
+		log.Fatal("problem with migration ", err)
+	} else {
+		fmt.Println("Migration complete")
+	}
 }

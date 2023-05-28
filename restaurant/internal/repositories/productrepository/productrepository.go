@@ -48,7 +48,7 @@ func (s *ProductService) CreateProduct(
 
 	if err := s.db.Create(product).Error; err != nil {
 		log.Printf("ошибка при создании продукта в базе данных: %v", err)
-		return nil, fmt.Errorf("ошибка при создании юзера")
+		return nil, fmt.Errorf("ошибка при создании продукта")
 	}
 
 	return &restaurant.CreateProductResponse{}, nil
@@ -81,5 +81,7 @@ func (s *ProductService) GetProductList(
 		apiProducts = append(apiProducts, apiProduct)
 	}
 
-	return &restaurant.GetProductListResponse{}, nil
+	return &restaurant.GetProductListResponse{
+		Result: apiProducts,
+	}, nil
 }

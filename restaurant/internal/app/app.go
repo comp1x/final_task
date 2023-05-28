@@ -3,8 +3,10 @@ package app
 import (
 	"context"
 	"final-task/restaurant/internal/config"
+	"final-task/restaurant/internal/repositories/menurepository"
 	"final-task/restaurant/internal/repositories/productrepository"
 	"fmt"
+	"github.com/caarlos0/env"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	customer "gitlab.com/mediasoft-internship/final-task/contracts/pkg/contracts/customer"
 	"gitlab.com/mediasoft-internship/final-task/contracts/pkg/contracts/restaurant"
@@ -33,18 +35,31 @@ func Run(cfg config.Config) error {
 }
 
 func runGRPCServer(cfg config.Config, s *grpc.Server) {
-	ProductServiceServer, err := productrepository.New("postgresql://db:db@0.0.0.0:5455/db?sslmode=disable")
+	if err := env.Parse(&cfg); err != nil {
+		log.Fatalf("failed to retrieve env variables, %v", err)
+	}
+
+	dsn := fmt.Sprintf(
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+		cfg.PgHost, cfg.PgUser, cfg.PgPwd, cfg.PgDBName, cfg.PgPort,
+	)
+
+	ProductServiceServer, err := productrepository.New(dsn)
 	if err != nil {
 		log.Fatalf("ошибка при создании OfficeService: %v", err)
 	}
-	//UserServiceServer, err := userrepository.New("postgresql://db:db@0.0.0.0:5454/db?sslmode=disable")
-	//OrderServiceServer, err := orderrepository.New(("postgresql://db:db@0.0.0.0:5454/db?sslmode=disable")
+	MenuServiceServer, err := menurepository.New(dsn)
+	if err != nil {
+		log.Fatalf("ошибка при создании MenuService: %v", err)
+	}
 
 	if err != nil {
-		log.Fatalf("ошибка при создании UserService: %v", err)
+		log.Fatalf(
+			"ошибка при создании UserService: %v", err)
 	}
 
 	restaurant.RegisterProductServiceServer(s, ProductServiceServer)
+	restaurant.RegisterMenuServiceServer(s, MenuServiceServer)
 
 	l, err := net.Listen("tcp", cfg.GRPCAddr)
 	if err != nil {
