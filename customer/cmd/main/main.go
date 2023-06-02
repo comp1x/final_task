@@ -5,14 +5,20 @@ import (
 
 	"github.com/caarlos0/env"
 
-	"final-task/customer/internal/app"
-	"final-task/customer/internal/config"
+	"github.com/comp1x/final-task/customer/internal/app"
+	"github.com/comp1x/final-task/customer/internal/config"
 )
 
 func main() {
 	cfg := config.Config{}
 
-	if err := env.Parse(&cfg); err != nil {
+	if err := env.Parse(&cfg.DB); err != nil {
+		log.Fatalf("failed to retrieve env variables, %v", err)
+	}
+	if err := env.Parse(&cfg.Restaurant); err != nil {
+		log.Fatalf("failed to retrieve env variables, %v", err)
+	}
+	if err := env.Parse(&cfg.Customer); err != nil {
 		log.Fatalf("failed to retrieve env variables, %v", err)
 	}
 

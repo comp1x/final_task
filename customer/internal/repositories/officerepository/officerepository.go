@@ -2,8 +2,8 @@ package officerepository
 
 import (
 	"context"
-	"final-task/customer/internal/models"
 	"fmt"
+	"github.com/comp1x/final-task/customer/internal/models"
 	"gitlab.com/mediasoft-internship/final-task/contracts/pkg/contracts/customer"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

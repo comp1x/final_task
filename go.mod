@@ -1,4 +1,4 @@
-module final-task
+module github.com/comp1x/final-task
 
 go 1.20
 

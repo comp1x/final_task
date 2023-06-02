@@ -2,10 +2,11 @@ package app
 
 import (
 	"context"
-	"final-task/customer/internal/config"
-	"final-task/customer/internal/repositories/officerepository"
-	"final-task/customer/internal/repositories/userrepository"
 	"fmt"
+	"github.com/comp1x/final-task/customer/internal/config"
+	officerepository "github.com/comp1x/final-task/customer/internal/repositories/officerepository"
+	orderrepository "github.com/comp1x/final-task/customer/internal/repositories/orderrepository"
+	userrepository "github.com/comp1x/final-task/customer/internal/repositories/userrepository"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	customer "gitlab.com/mediasoft-internship/final-task/contracts/pkg/contracts/customer"
 	"google.golang.org/grpc"
@@ -20,12 +21,12 @@ import (
 
 func Run(cfg config.Config) error {
 	s := grpc.NewServer()
-	//mux := runtime.NewServeMux()
-	_, cancel := context.WithCancel(context.Background())
+	mux := runtime.NewServeMux()
+	ctx, cancel := context.WithCancel(context.Background())
 
 	go runGRPCServer(cfg, s)
 
-	//go runHTTPServer(ctx, cfg, mux)
+	go runHTTPServer(ctx, cfg, mux)
 
 	gracefulShutDown(s, cancel)
 
@@ -33,27 +34,31 @@ func Run(cfg config.Config) error {
 }
 
 func runGRPCServer(cfg config.Config, s *grpc.Server) {
-	OfficeServiceServer, err := officerepository.New("postgresql://db:db@0.0.0.0:5454/db?sslmode=disable")
+	dsn := fmt.Sprintf(
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+		cfg.DB.PgHost, cfg.DB.PgUser, cfg.DB.PgPwd, cfg.DB.PgDBName, cfg.DB.PgPort,
+	)
+	OfficeServiceServer, err := officerepository.New(dsn)
 	if err != nil {
 		log.Fatalf("ошибка при создании OfficeService: %v", err)
 	}
-	UserServiceServer, err := userrepository.New("postgresql://db:db@0.0.0.0:5454/db?sslmode=disable")
-	//OrderServiceServer, err := orderrepository.New(("postgresql://db:db@0.0.0.0:5454/db?sslmode=disable")
+	UserServiceServer, err := userrepository.New(dsn)
+	OrderServiceServer, err := orderrepository.New(dsn)
 
 	if err != nil {
 		log.Fatalf("ошибка при создании UserService: %v", err)
 	}
 
 	customer.RegisterOfficeServiceServer(s, OfficeServiceServer)
-	//customer.RegisterOrderServiceServer()
+	customer.RegisterOrderServiceServer(s, OrderServiceServer)
 	customer.RegisterUserServiceServer(s, UserServiceServer)
 
-	l, err := net.Listen("tcp", cfg.GRPCAddr)
+	l, err := net.Listen("tcp", cfg.Customer.GRPCAddr)
 	if err != nil {
-		log.Fatalf("failed to listen tcp %s, %v", cfg.GRPCAddr, err)
+		log.Fatalf("failed to listen tcp %s, %v", cfg.Customer.GRPCAddr, err)
 	}
 
-	log.Printf("starting listening grpc server at %s", cfg.GRPCAddr)
+	log.Printf("starting listening grpc server at %s", cfg.Customer.GRPCAddr)
 	if err := s.Serve(l); err != nil {
 		log.Fatalf("error services grpc server %v", err)
 	}
@@ -65,7 +70,7 @@ func runHTTPServer(
 	err := customer.RegisterOfficeServiceHandlerFromEndpoint(
 		ctx,
 		mux,
-		"0.0.0.0"+cfg.GRPCAddr,
+		"0.0.0.0"+cfg.Customer.GRPCAddr,
 		[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())},
 	)
 
@@ -76,7 +81,7 @@ func runHTTPServer(
 	err = customer.RegisterOrderServiceHandlerFromEndpoint(
 		ctx,
 		mux,
-		"0.0.0.0"+cfg.GRPCAddr,
+		"0.0.0.0"+cfg.Customer.GRPCAddr,
 		[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())},
 	)
 
@@ -87,7 +92,7 @@ func runHTTPServer(
 	err = customer.RegisterUserServiceHandlerFromEndpoint(
 		ctx,
 		mux,
-		"0.0.0.0"+cfg.GRPCAddr,
+		"0.0.0.0"+cfg.Customer.GRPCAddr,
 		[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())},
 	)
 	if err != nil {

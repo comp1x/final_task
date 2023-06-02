@@ -2,8 +2,8 @@ package menurepository
 
 import (
 	"context"
-	"final-task/restaurant/internal/models"
 	"fmt"
+	"github.com/comp1x/final-task/restaurant/internal/models"
 	"gitlab.com/mediasoft-internship/final-task/contracts/pkg/contracts/restaurant"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -66,16 +66,19 @@ func (s *MenuService) GetMenu(
 	}
 
 	Year, Month, Day := request.OnDate.AsTime().Date()
+	fmt.Println(Year, Month, Day)
 
 	var menu models.Menu
-	if err := s.db.First(&menu).Where("year = ? AND month = ? AND day = ?", Year, int(Month), Day).Error; err != nil {
+	if err := s.db.Where("year = ? AND month = ? AND day = ?", Year, int(Month), Day).First(&menu).Error; err != nil {
 		log.Printf("ошибка при получении меню из базы данных: %v", err)
 		return nil, fmt.Errorf("ошибка при получении меню")
 	}
 
+	fmt.Println(menu)
+
 	var products []models.Product
 	if err := s.db.Find(&products).Where("ID = ?", menu.ProductsUuids).Error; err != nil {
-		log.Printf("ошибка при получении списка офисов из базы данных: %v", err)
+		log.Printf("ошибка при получении списка продуктов из базы данных: %v", err)
 		return nil, fmt.Errorf("ошибка при получении списка офисов")
 	}
 	apiUnspecified := make([]*restaurant.Product, 0)

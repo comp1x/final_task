@@ -2,11 +2,11 @@ package app
 
 import (
 	"context"
-	"final-task/restaurant/internal/config"
-	"final-task/restaurant/internal/repositories/menurepository"
-	"final-task/restaurant/internal/repositories/productrepository"
 	"fmt"
 	"github.com/caarlos0/env"
+	"github.com/comp1x/final-task/restaurant/internal/config"
+	"github.com/comp1x/final-task/restaurant/internal/repositories/menurepository"
+	"github.com/comp1x/final-task/restaurant/internal/repositories/productrepository"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	customer "gitlab.com/mediasoft-internship/final-task/contracts/pkg/contracts/customer"
 	"gitlab.com/mediasoft-internship/final-task/contracts/pkg/contracts/restaurant"
@@ -22,12 +22,12 @@ import (
 
 func Run(cfg config.Config) error {
 	s := grpc.NewServer()
-	//mux := runtime.NewServeMux()
-	_, cancel := context.WithCancel(context.Background())
+	mux := runtime.NewServeMux()
+	ctx, cancel := context.WithCancel(context.Background())
 
 	go runGRPCServer(cfg, s)
 
-	//go runHTTPServer(ctx, cfg, mux)
+	go runHTTPServer(ctx, cfg, mux)
 
 	gracefulShutDown(s, cancel)
 

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"final-task/restaurant/internal/app"
-	"final-task/restaurant/internal/config"
 	"github.com/caarlos0/env"
+	"github.com/comp1x/final-task/restaurant/internal/app"
+	"github.com/comp1x/final-task/restaurant/internal/config"
 	"log"
 )
 

@@ -1,14 +1,14 @@
 package main
 
 import (
-	"final-task/customer/internal/config"
 	"fmt"
 	"github.com/caarlos0/env"
+	"github.com/comp1x/final-task/customer/internal/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
 
-	"final-task/customer/internal/models"
+	"github.com/comp1x/final-task/customer/internal/models"
 )
 
 func InitGormDB(cfg config.Config) (*gorm.DB, error) {
@@ -33,6 +33,10 @@ func main() {
 	}
 
 	GormDB.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")
-	GormDB.AutoMigrate(&models.Office{}, &models.User{})
-	fmt.Println("? Migration complete")
+	err = GormDB.AutoMigrate(&models.Office{}, &models.User{})
+	if err != nil {
+		log.Fatal("problem with migration ", err)
+	} else {
+		fmt.Println("Migration complete")
+	}
 }

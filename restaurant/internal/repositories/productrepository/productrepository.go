@@ -2,8 +2,8 @@ package productrepository
 
 import (
 	"context"
-	"final-task/restaurant/internal/models"
 	"fmt"
+	"github.com/comp1x/final-task/restaurant/internal/models"
 	_ "github.com/google/uuid"
 	restaurant "gitlab.com/mediasoft-internship/final-task/contracts/pkg/contracts/restaurant"
 	"google.golang.org/grpc/codes"
