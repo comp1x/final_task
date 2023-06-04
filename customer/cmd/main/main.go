@@ -4,9 +4,8 @@ import (
 	"log"
 
 	"github.com/caarlos0/env"
-
-	"github.com/comp1x/final-task/customer/internal/app"
-	"github.com/comp1x/final-task/customer/internal/config"
+	"github.com/comp1x/final-task/customer/pkg/app"
+	"github.com/comp1x/final-task/customer/pkg/config"
 )
 
 func main() {

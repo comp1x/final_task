@@ -1,41 +1,17 @@
 version: '3.7'
 
 services:
-  customer:
+  final-task:
     image: postgres:12.2-alpine
     restart: always
     ports:
       - "5454:5432"
     volumes:
-      - postgres-customer:/var/lib/postgresql/data-customer
-    environment:
-      - POSTGRES_USER=db
-      - POSTGRES_PASSWORD=db
-      - POSTGRES_DB=db
-  restaurant:
-    image: postgres:12.2-alpine
-    restart: always
-    ports:
-      - "5455:5432"
-    volumes:
-      - postgres-restaurant:/var/lib/postgresql/data-restaurant
-    environment:
-      - POSTGRES_USER=db
-      - POSTGRES_PASSWORD=db
-      - POSTGRES_DB=db
-  statistics:
-    image: postgres:12.2-alpine
-    restart: always
-    ports:
-      - "5456:5432"
-    volumes:
-      - postgres-statistics:/var/lib/postgresql/data-statistics
+      - postgres-data:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=db
       - POSTGRES_PASSWORD=db
       - POSTGRES_DB=db
 
 volumes:
-  postgres-customer:
-  postgres-restaurant:
-  postgres-statistics:
+  postgres-data:
