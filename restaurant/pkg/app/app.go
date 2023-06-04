@@ -6,6 +6,7 @@ import (
 	"github.com/caarlos0/env"
 	"github.com/comp1x/final-task/restaurant/pkg/config"
 	"github.com/comp1x/final-task/restaurant/pkg/repositories/menurepository"
+	"github.com/comp1x/final-task/restaurant/pkg/repositories/orderrepository"
 	"github.com/comp1x/final-task/restaurant/pkg/repositories/productrepository"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"gitlab.com/mediasoft-internship/final-task/contracts/pkg/contracts/restaurant"
@@ -57,6 +58,10 @@ func runGRPCServer(cfg config.Config, s *grpc.Server) {
 	if err != nil {
 		log.Fatalf("ошибка при создании MenuService: %v", err)
 	}
+	OrderServiceServer, err := orderrepository.New(dsn)
+	if err != nil {
+		log.Fatalf("ошибка при создании MenuService: %v", err)
+	}
 
 	if err != nil {
 		log.Fatalf(
@@ -65,6 +70,7 @@ func runGRPCServer(cfg config.Config, s *grpc.Server) {
 
 	restaurant.RegisterProductServiceServer(s, ProductServiceServer)
 	restaurant.RegisterMenuServiceServer(s, MenuServiceServer)
+	restaurant.RegisterOrderServiceServer(s, OrderServiceServer)
 
 	l, err := net.Listen("tcp", cfg.Restaurant.GRPCAddr)
 	if err != nil {

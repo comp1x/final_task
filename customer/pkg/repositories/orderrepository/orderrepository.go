@@ -140,7 +140,7 @@ func (s *OrderService) CreateOrder(
 	}
 	for _, order := range Orders {
 		if err := s.db.Table("orders").Create(order).Error; err != nil {
-			log.Printf("ошибка при создании офиса в базе данных: %v", err)
+			log.Printf("ошибка при создании заказа в базе данных: %v", err)
 			return nil, fmt.Errorf("ошибка при создании заказа")
 		}
 	}
