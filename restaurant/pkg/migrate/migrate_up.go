@@ -39,7 +39,6 @@ func main() {
 	}
 
 	GormDB.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")
-	GormDB.Exec("DROP TABLE \"orders\";")
 	err = GormDB.AutoMigrate(&models.Product{}, &models.Menu{}, &models.Order{})
 	if err != nil {
 		log.Fatal("problem with migration ", err)
