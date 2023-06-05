@@ -4,6 +4,7 @@ type Config struct {
 	Customer
 	DB
 	Restaurant
+	Kafka
 }
 
 type Customer struct {
@@ -21,4 +22,10 @@ type DB struct {
 
 type Restaurant struct {
 	GRPCAddr string `env:"GATEWAY_GRPC_ADDR_RESTAURANT" envDefault:":13104"`
+}
+
+type Kafka struct {
+	Host  string `env:"KAFKA_HOST" envDefault:"localhost"`
+	Port  string `env:"KAFKA_PORT" envDefault:"9092"`
+	Topic string `env:"KAFKA_TOPIC" envDefault:"orders"`
 }

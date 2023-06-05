@@ -7,16 +7,19 @@ import (
 	officerepository "github.com/comp1x/final-task/customer/pkg/repositories/officerepository"
 	orderrepository "github.com/comp1x/final-task/customer/pkg/repositories/orderrepository"
 	userrepository "github.com/comp1x/final-task/customer/pkg/repositories/userrepository"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	customer "gitlab.com/mediasoft-internship/final-task/contracts/pkg/contracts/customer"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/proto"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 func Run(cfg config.Config) error {
@@ -28,9 +31,61 @@ func Run(cfg config.Config) error {
 
 	go runHTTPServer(ctx, cfg, mux)
 
+	go consumeOrders(cfg)
+
 	gracefulShutDown(s, cancel)
 
 	return nil
+}
+
+func consumeOrders(cfg config.Config) {
+	time.Sleep(time.Second * 5)
+	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
+		"bootstrap.servers": cfg.Kafka.Host + cfg.Kafka.Port,
+		"group.id":          cfg.Kafka.Topic,
+		"auto.offset.reset": "smallest",
+	})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = consumer.Subscribe(cfg.Kafka.Topic, nil)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for {
+		ev := consumer.Poll(100)
+		switch e := ev.(type) {
+		case *kafka.Message:
+			var conn *grpc.ClientConn
+
+			conn, err := grpc.Dial(cfg.Customer.GRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			if err != nil {
+				log.Fatal("error connect to grpc server err:", err)
+			}
+
+			client := customer.NewOrderServiceClient(conn)
+
+			orderReq := customer.CreateOrderRequest{}
+
+			if err := proto.Unmarshal(e.Value, &orderReq); err != nil {
+				fmt.Println("Error unmarshaling protobuf:", err)
+				log.Fatal(err)
+			}
+
+			_, err = client.CreateOrder(context.Background(), &orderReq)
+
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			conn.Close()
+			fmt.Printf("consumed message from the que: %s\n", string(e.Value))
+		}
+	}
 }
 
 func runGRPCServer(cfg config.Config, s *grpc.Server) {

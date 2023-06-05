@@ -20,6 +20,9 @@ func main() {
 	if err := env.Parse(&cfg.Customer); err != nil {
 		log.Fatalf("failed to retrieve env variables, %v", err)
 	}
+	if err := env.Parse(&cfg.Kafka); err != nil {
+		log.Fatalf("failed to retrieve env variables, %v", err)
+	}
 
 	if err := app.Run(cfg); err != nil {
 		log.Fatal("error running gateway server ", err)
