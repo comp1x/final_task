@@ -1,14 +1,8 @@
 package config
 
 type Config struct {
-	Restaurant
 	DB
-	Customer
-}
-
-type Restaurant struct {
-	HTTPAddr string `env:"GATEWAY_HTTP_ADDR" envDefault:":13103"`
-	GRPCAddr string `env:"GATEWAY_GRPC_ADDR" envDefault:":13104"`
+	Statistics
 }
 
 type DB struct {
@@ -19,6 +13,7 @@ type DB struct {
 	PgPwd    string `env:"PG_PWD" envDefault:"db"`
 }
 
-type Customer struct {
-	GRPCAddr string `env:"GATEWAY_GRPC_ADDR" envDefault:":13102"`
+type Statistics struct {
+	HTTPAddr string `env:"GATEWAY_HTTP_ADDR" envDefault:":13105"`
+	GRPCAddr string `env:"GATEWAY_GRPC_ADDR" envDefault:":13106"`
 }

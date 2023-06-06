@@ -41,7 +41,7 @@ func Run(cfg config.Config) error {
 func consumeOrders(cfg config.Config) {
 	time.Sleep(time.Second * 5)
 	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": cfg.Kafka.Host + cfg.Kafka.Port,
+		"bootstrap.servers": cfg.Kafka.Host + ":" + cfg.Kafka.Port,
 		"group.id":          cfg.Kafka.Topic,
 		"auto.offset.reset": "smallest",
 	})
@@ -83,7 +83,6 @@ func consumeOrders(cfg config.Config) {
 			}
 
 			conn.Close()
-			fmt.Printf("consumed message from the que: %s\n", string(e.Value))
 		}
 	}
 }
@@ -154,7 +153,7 @@ func runHTTPServer(
 		log.Fatal(err)
 	}
 	log.Printf("starting listening http server at %s", cfg.HTTPAddr)
-	if err := http.ListenAndServe(cfg.HTTPAddr, mux); err != nil {
+	if err := http.ListenAndServe(cfg.Customer.HTTPAddr, mux); err != nil {
 		log.Fatalf("error service http server %v", err)
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"gitlab.com/mediasoft-internship/final-task/contracts/pkg/contracts/customer"
 	"google.golang.org/protobuf/proto"
 	"log"
+	"strconv"
 	"time"
 )
 
@@ -48,7 +49,6 @@ func (op *OrderPlacer) placeOrder(request customer.CreateOrderRequest) error {
 }
 
 func main() {
-	//topic := "orders"
 
 	p, err := kafka.NewProducer(&kafka.ConfigMap{
 		"bootstrap.servers": "localhost:9092",
@@ -81,6 +81,7 @@ func main() {
 		if err := op.placeOrder(request); err != nil {
 			log.Fatal(err)
 		}
+		fmt.Println("added in kafka req №" + strconv.Itoa(i))
 		time.Sleep(time.Millisecond * 100)
 	}
 }

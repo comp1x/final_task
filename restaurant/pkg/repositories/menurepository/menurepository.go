@@ -74,7 +74,7 @@ func (s *MenuService) GetMenu(
 	}
 
 	var products []models.Product
-	if err := s.db.Find(&products).Where("ID = ?", menu.ProductsUuids).Error; err != nil {
+	if err := s.db.Where("id IN ?", []string(menu.ProductsUuids)).Find(&products).Error; err != nil {
 		log.Printf("ошибка при получении списка продуктов из базы данных: %v", err)
 		return nil, fmt.Errorf("ошибка при получении списка офисов")
 	}

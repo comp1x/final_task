@@ -47,7 +47,7 @@ func runGRPCServer(cfg config.Config, s *grpc.Server) {
 
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
-		cfg.PgHost, cfg.PgUser, cfg.PgPwd, cfg.PgDBName, cfg.PgPort,
+		cfg.DB.PgHost, cfg.DB.PgUser, cfg.DB.PgPwd, cfg.DB.PgDBName, cfg.DB.PgPort,
 	)
 
 	ProductServiceServer, err := productrepository.New(dsn)
@@ -117,8 +117,8 @@ func runHTTPServer(
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("starting listening http server at %s", cfg.HTTPAddr)
-	if err := http.ListenAndServe(cfg.HTTPAddr, mux); err != nil {
+	log.Printf("starting listening http server at %s", cfg.Restaurant.HTTPAddr)
+	if err := http.ListenAndServe(cfg.Restaurant.HTTPAddr, mux); err != nil {
 		log.Fatalf("error service http server %v", err)
 	}
 }

@@ -64,7 +64,7 @@ func (s *ProductService) GetProductList(
 	var products []models.Product
 	if err := s.db.Find(&products).Error; err != nil {
 		log.Printf("ошибка при получении списка продуктов из базы данных: %v", err)
-		return nil, fmt.Errorf("ошибка при получении списка офисов")
+		return nil, fmt.Errorf("ошибка при получении списка продуктов")
 	}
 
 	apiProducts := make([]*restaurant.Product, 0, len(products))
