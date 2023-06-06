@@ -56,7 +56,7 @@
 
 ```in future..```
 
-### Специально для вас - [examples](..main/examples)
+### Специально для вас - [examples](/examples)
 
 ### В будущем:
 
