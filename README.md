@@ -14,7 +14,7 @@
 4. БД - Postgres
 5. Брокер - Apache Kafka
 
-Текущий прогресс
+### Текущий прогресс
 - [x] CustomerService (CreateOffice, GetOfficeList, CreateOrder, GetActualMenu, GetUserList, CreateUser)
 - [x] RestaurantService (CreateMenu, GetMenu, GetUpToDateOrderList, GetProductList, CreateProduct)
 - [ ] StatisticsService (in future)
@@ -39,8 +39,6 @@
 ```go run customer/pkg/migrate/migrate_up.go```
 
 ```go run restaurant/pkg/migrate/migrate_up.go```
-
-```go run statistics/pkg/migrate/migrate_up.go```
 
 ### Запуск сервисов:
 
