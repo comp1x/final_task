@@ -51,11 +51,6 @@ func runGRPCServer(cfg config.Config, s *grpc.Server) {
 		log.Fatalf("ошибка при создании MenuService: %v", err)
 	}
 
-	if err != nil {
-		log.Fatalf(
-			"ошибка при создании UserService: %v", err)
-	}
-
 	statistics.RegisterStatisticsServiceServer(s, StatisticsServiceServer)
 
 	l, err := net.Listen("tcp", cfg.Statistics.GRPCAddr)

@@ -96,11 +96,16 @@ func runGRPCServer(cfg config.Config, s *grpc.Server) {
 	if err != nil {
 		log.Fatalf("ошибка при создании OfficeService: %v", err)
 	}
+
 	UserServiceServer, err := userrepository.New(dsn)
+	if err != nil {
+		log.Fatalf("ошибка при создании UserService: %v", err)
+	}
+
 	OrderServiceServer, err := orderrepository.New(dsn)
 
 	if err != nil {
-		log.Fatalf("ошибка при создании UserService: %v", err)
+		log.Fatalf("ошибка при создании OrderService: %v", err)
 	}
 
 	customer.RegisterOfficeServiceServer(s, OfficeServiceServer)
@@ -111,7 +116,6 @@ func runGRPCServer(cfg config.Config, s *grpc.Server) {
 	if err != nil {
 		log.Fatalf("failed to listen tcp %s, %v", cfg.Customer.GRPCAddr, err)
 	}
-
 	log.Printf("starting listening grpc server at %s", cfg.Customer.GRPCAddr)
 	if err := s.Serve(l); err != nil {
 		log.Fatalf("error services grpc server %v", err)

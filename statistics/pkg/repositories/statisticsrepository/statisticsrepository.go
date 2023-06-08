@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"github.com/comp1x/final-task/restaurant/pkg/models"
+	"github.com/google/uuid"
 	"gitlab.com/mediasoft-internship/final-task/contracts/pkg/contracts/statistics"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
+	"sort"
 )
 
 type StatisticsService struct {
@@ -35,17 +37,105 @@ func (s *StatisticsService) GetAmountOfProfit(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
+	timeStart := request.GetStartDate().AsTime()
+	timeEnd := request.GetEndDate().AsTime()
+
 	var orders []models.Order
-	if err := s.db.Table("orders").Where("created_at > ? AND created_at < ?", request.StartDate.AsTime(), request.EndDate.AsTime()).Find(&orders); err != nil {
+	if err := s.db.Where("created_at BETWEEN ? AND ?", timeStart, timeEnd).Find(&orders).Error; err != nil {
 		log.Printf("ошибка при получении заказов из базы данных: %v", err)
 		return nil, fmt.Errorf("ошибка при получении списка заказов")
 	}
-	fmt.Println(orders)
-	return nil, nil
+	var profit float64
+
+	for _, order := range orders {
+		var product *models.Product
+		if err := s.db.Select("price").First(&product, order.ProductUuid).Error; err != nil {
+			log.Printf("ошибка при получении продуктов из базы данных: %v", err)
+			return nil, fmt.Errorf("ошибка при запросе к бд по продукту")
+		}
+		profit += product.Price * float64(order.Count)
+	}
+	return &statistics.GetAmountOfProfitResponse{
+		Profit: profit,
+	}, nil
 }
 
 func (s *StatisticsService) TopProducts(
 	ctx context.Context, request *statistics.TopProductsRequest,
 ) (*statistics.TopProductsResponse, error) {
-	return nil, nil
+
+	var orders []models.Order
+
+	if request.StartDate != nil && request.EndDate != nil {
+		timeStart := request.GetStartDate().AsTime()
+		timeEnd := request.GetEndDate().AsTime()
+
+		if err := s.db.Where("created_at BETWEEN ? AND ?", timeStart, timeEnd).Find(&orders).Error; err != nil {
+			log.Printf("ошибка при получении заказов из базы данных: %v", err)
+			return nil, fmt.Errorf("ошибка при получении списка заказов")
+		}
+	} else if request.StartDate != nil && request.EndDate == nil {
+		timeStart := request.GetStartDate().AsTime()
+
+		if err := s.db.Where("created_at > ?", timeStart).Find(&orders).Error; err != nil {
+			log.Printf("ошибка при получении заказов из базы данных: %v", err)
+			return nil, fmt.Errorf("ошибка при получении списка заказов")
+		}
+	} else if request.EndDate != nil && request.StartDate == nil {
+		timeEnd := request.GetStartDate().AsTime()
+
+		if err := s.db.Where("created_at < ?", timeEnd).Find(&orders).Error; err != nil {
+			log.Printf("ошибка при получении заказов из базы данных: %v", err)
+			return nil, fmt.Errorf("ошибка при получении списка заказов")
+		}
+	} else if request.EndDate == nil && request.StartDate == nil {
+		if err := s.db.Find(&orders).Error; err != nil {
+			log.Printf("ошибка при получении заказов из базы данных: %v", err)
+			return nil, fmt.Errorf("ошибка при получении списка заказов")
+		}
+	}
+
+	productsMap := make(map[uuid.UUID]int64)
+
+	for _, order := range orders {
+		productsMap[order.ProductUuid] += order.Count
+	}
+
+	var productCounts []ProductCount
+	for key, value := range productsMap {
+		productCounts = append(productCounts, ProductCount{key, value})
+	}
+
+	sort.Sort(ByCountDesc(productCounts))
+
+	apiProducts := make([]*statistics.Product, 0, len(productsMap))
+	for _, productWithCount := range productCounts {
+		var product *models.Product
+		if err := s.db.Select("name", "type").First(&product, productWithCount.ProductUUID).Error; err != nil {
+			log.Printf("ошибка при получении продукта из базы данных: %v", err)
+			return nil, fmt.Errorf("ошибка при запросе к бд по продукту")
+		}
+		apiProduct := &statistics.Product{
+			Uuid:        productWithCount.ProductUUID.String(),
+			Name:        product.Name,
+			Count:       productWithCount.Count,
+			ProductType: statistics.StatisticsProductType(product.Type),
+		}
+		apiProducts = append(apiProducts, apiProduct)
+	}
+
+	return &statistics.TopProductsResponse{
+		Result: apiProducts,
+	}, nil
 }
+
+type ProductCount struct {
+	ProductUUID uuid.UUID
+	Count       int64
+}
+
+type ByCountDesc []ProductCount
+
+func (a ByCountDesc) Len() int           { return len(a) }
+func (a ByCountDesc) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByCountDesc) Less(i, j int) bool { return a[i].Count > a[j].Count }

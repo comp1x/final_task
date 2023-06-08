@@ -9,13 +9,13 @@
 curl -X POST -H "Content-Type: application/json" -d '{
   "name": "string",
   "address": "string"
-}' http://localhost:13101/customer/offices
+}' "http://localhost:13101/customer/offices"
 ```
 
 ### GetOffices
 
 ```
-curl http://localhost:13101/customer/offices
+curl "http://localhost:13101/customer/offices"
 ```
 
 ### CreateUser
@@ -24,19 +24,19 @@ curl http://localhost:13101/customer/offices
 curl -X POST -H "Content-Type: application/json" -d '{
     "name": "string",
     "office_uuid": "string"
-}' http://localhost:13101/customer/users
+}' "http://localhost:13101/customer/users"
 ```
 
 ### GetUsers
 
 ```
-curl http://localhost:13101/customer/users?office_uuid=uuid
+curl "http://localhost:13101/customer/users?office_uuid=uuid"
 ```
 
 ### GetActualMenu
 
 ```
-curl http://localhost:13101/customer/users/orders
+curl "http://localhost:13101/customer/users/orders"
 ```
 
 ### CreateOrder
@@ -80,7 +80,7 @@ curl -X POST -H "Content-Type: application/json" -d '{
       "product_uuid": "string"
     }
   ]
-}' http://localhost:13101/customer/users/orders
+}' "http://localhost:13101/customer/users/orders"
 ```
 
 # RESTAURANT
@@ -88,7 +88,7 @@ curl -X POST -H "Content-Type: application/json" -d '{
 ### GetMenu
 
 ```
-GET http://localhost:13103/restaurant/menu?on_date=2023-06-05T15:04:05.999999999Z
+curl "http://localhost:13103/restaurant/menu?on_date=2023-06-05T15:04:05.999999999Z"
 ```
 
 ### CreateMenu
@@ -116,19 +116,19 @@ curl -X POST -H "Content-Type: application/json" -d '{
   "desserts": [
     "uuid"
   ]
-}' http://localhost:13103/restaurant/menu
+}' "http://localhost:13103/restaurant/menu"
 ```
 
 ### GetUpToDateOrderList
 
 ```
-curl http://localhost:13103/restaurant/orders
+curl "http://localhost:13103/restaurant/orders"
 ```
 
 ### GetProductList
 
 ```
-curl http://localhost:13103/restaurant/products
+curl "http://localhost:13103/restaurant/products"
 ```
 
 ### CreateProduct
@@ -148,14 +148,11 @@ curl -X POST -H "Content-Type: application/json" -d '{
 ### GetAmountOfProfit
 
 ```
-curl -X GET -H "Content-Type: application/json" -d '{
-  "start_date": "2023-06-06T12:14:43.401Z",
-  "end_date": "2023-06-06T23:0:00.401Z"
-}' http://localhost:13105/statistics/amount-of-profit
+curl "http://localhost:13105/statistics/amount-of-profit?start_date=2023-06-06T12:14:43.401Z&end_date=2023-06-06T23:00:00.401Z"
 ```
 
 ### TopProducts
 
 ```
-curl http://localhost:13105/statistics/top-products
+curl "http://localhost:13105/statistics/top-products"
 ```

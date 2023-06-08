@@ -17,7 +17,7 @@
 ### Текущий прогресс
 - [x] CustomerService (CreateOffice, GetOfficeList, CreateOrder, GetActualMenu, GetUserList, CreateUser)
 - [x] RestaurantService (CreateMenu, GetMenu, GetUpToDateOrderList, GetProductList, CreateProduct)
-- [ ] StatisticsService (in future)
+- [x] StatisticsService (GetAmountOfProfit, TopProducts)
 
 ## Локальный запуск проекта
 
@@ -52,14 +52,7 @@
 
 Запуск сервиса statistics:
 
-```in future..```
+```go run statistics/cmd/main/main.go```
 
-### Специально для вас - [examples](/examples)
-
-### В будущем:
-
-1. Отрефакторить код)
-2. Правильно обработать все ошибки
-3. Дописать юнит тесты
-4. Добавить logger (logrus) -> сохранять логи в стрим
+### Примеры выполнения запросов - [examples](/examples)
 

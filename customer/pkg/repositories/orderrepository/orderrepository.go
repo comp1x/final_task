@@ -37,15 +37,6 @@ func New(dbURL string) (*OrderService, error) {
 	}, nil
 }
 
-func getProductById(products []*restaurant.Product, id string) (*restaurant.Product, error) {
-	for _, p := range products {
-		if p.Uuid == id {
-			return p, nil
-		}
-	}
-	return nil, fmt.Errorf("product not found")
-}
-
 func (s *OrderService) CreateOrder(
 	ctx context.Context, request *customer.CreateOrderRequest,
 ) (*customer.CreateOrderResponse, error) {

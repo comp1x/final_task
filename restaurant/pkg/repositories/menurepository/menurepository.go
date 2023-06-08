@@ -65,7 +65,7 @@ func (s *MenuService) GetMenu(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	Year, Month, Day := request.OnDate.AsTime().Date()
+	Year, Month, Day := request.GetOnDate().AsTime().Date()
 
 	var menu models.Menu
 	if err := s.db.Where("year = ? AND month = ? AND day = ?", Year, int(Month), Day).First(&menu).Error; err != nil {
