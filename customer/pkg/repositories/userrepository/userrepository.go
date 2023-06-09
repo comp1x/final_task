@@ -2,7 +2,6 @@ package userrepository
 
 import (
 	"context"
-	"fmt"
 	"github.com/comp1x/final-task/customer/pkg/models"
 	"github.com/google/uuid"
 	"gitlab.com/mediasoft-internship/final-task/contracts/pkg/contracts/customer"
@@ -11,7 +10,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
 )
 
 type UserService struct {
@@ -23,7 +21,7 @@ type UserService struct {
 func New(dbURL string) (*UserService, error) {
 	db, err := gorm.Open(postgres.Open(dbURL), &gorm.Config{})
 	if err != nil {
-		return nil, fmt.Errorf("ошибка при подключении к базе данных: %w", err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 
 	return &UserService{
@@ -41,8 +39,7 @@ func (s *UserService) CreateUser(
 	UuidFormatFromString, err := uuid.Parse(request.OfficeUuid)
 
 	if err != nil {
-		log.Printf("not type uuid.UUID: %v", err)
-		return nil, fmt.Errorf("not type uuid.UUID")
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	user := &models.User{
@@ -51,8 +48,7 @@ func (s *UserService) CreateUser(
 	}
 
 	if err = s.db.Create(user).Error; err != nil {
-		log.Printf("ошибка при создании юзера в базе данных: %v", err)
-		return nil, fmt.Errorf("ошибка при создании юзера")
+		return nil, status.Error(codes.Unknown, err.Error())
 	}
 
 	return &customer.CreateUserResponse{}, nil
@@ -62,28 +58,24 @@ func (s *UserService) GetUserList(
 	ctx context.Context, request *customer.GetUserListRequest,
 ) (*customer.GetUserListResponse, error) {
 	if err := request.ValidateAll(); err != nil {
-		log.Printf("ошибка при валидации: %v", err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	UuidFormatFromString, err := uuid.Parse(request.OfficeUuid)
 	if err != nil {
-		log.Printf("ошибка при конвертации: %v", err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	var CurrentOffice models.Office
 
 	if err := s.db.WithContext(ctx).Find(&CurrentOffice).Where("id = ?", UuidFormatFromString).Error; err != nil {
-		log.Printf("ошибка при получении имени офиса из базы данных: %v", err)
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 
 	var users []models.User
 
 	if err := s.db.Find(&users).Where("office_uuid = ?", UuidFormatFromString).Error; err != nil {
-		log.Printf("ошибка при получении списка юзеров из базы данных: %v", err)
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 
 	apiUsers := make([]*customer.User, 0, len(users))

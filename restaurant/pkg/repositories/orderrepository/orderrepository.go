@@ -2,7 +2,6 @@ package orderrepository
 
 import (
 	"context"
-	"fmt"
 	modelsCustomer "github.com/comp1x/final-task/customer/pkg/models"
 	"github.com/comp1x/final-task/restaurant/pkg/models"
 	"gitlab.com/mediasoft-internship/final-task/contracts/pkg/contracts/restaurant"
@@ -10,7 +9,6 @@ import (
 	"google.golang.org/grpc/status"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
 )
 
 type OrderService struct {
@@ -22,7 +20,7 @@ type OrderService struct {
 func New(dbURL string) (*OrderService, error) {
 	db, err := gorm.Open(postgres.Open(dbURL), &gorm.Config{})
 	if err != nil {
-		return nil, fmt.Errorf("ошибка при подключении к базе данных: %w", err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 
 	return &OrderService{
@@ -39,8 +37,7 @@ func (s *OrderService) GetUpToDateOrderList(
 
 	var orders []models.Order
 	if err := s.db.Find(&orders).Error; err != nil {
-		log.Printf("ошибка при получении заказов из базы данных: %v", err)
-		return nil, fmt.Errorf("ошибка при получении списка заказов")
+		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
 	apiTotalOrders := make([]*restaurant.Order, 0)
@@ -55,8 +52,7 @@ func (s *OrderService) GetUpToDateOrderList(
 
 	var offices []modelsCustomer.Office
 	if err := s.db.Find(&offices).Error; err != nil {
-		log.Printf("ошибка при получении офисов из базы данных: %v", err)
-		return nil, fmt.Errorf("ошибка при получении списка офисов")
+		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
 	apiOrdersByOffice := make([]*restaurant.OrdersByOffice, 0)
@@ -64,11 +60,14 @@ func (s *OrderService) GetUpToDateOrderList(
 	for _, office := range offices {
 		apiOrdersByCompany := make([]*restaurant.Order, 0)
 		var orders []models.Order
-		s.db.Where(&models.Order{
+		err := s.db.Where(&models.Order{
 			User: modelsCustomer.User{
 				OfficeUuid: office.ID,
 			},
-		}).Find(&orders)
+		}).Find(&orders).Error
+		if err != nil {
+			return nil, status.Error(codes.NotFound, err.Error())
+		}
 		for _, order := range orders {
 			apiOrder := &restaurant.Order{
 				ProductId:   order.ProductUuid.String(),

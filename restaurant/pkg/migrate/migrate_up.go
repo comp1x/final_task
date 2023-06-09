@@ -35,14 +35,15 @@ func main() {
 	GormDB, err := InitGormDB(cfg)
 
 	if err != nil {
-		log.Fatal("? Could not connect to db", err)
+		log.Fatalf("failed to init gormDB: , %v", err)
 	}
 
 	GormDB.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")
+
 	err = GormDB.AutoMigrate(&models.Product{}, &models.Menu{}, &models.Order{})
 	if err != nil {
 		log.Fatal("problem with migration ", err)
 	} else {
-		fmt.Println("Migration complete")
+		fmt.Println("Migration of restaurant completed")
 	}
 }

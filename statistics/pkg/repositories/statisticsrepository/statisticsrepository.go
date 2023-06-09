@@ -2,7 +2,6 @@ package statisticsrepository
 
 import (
 	"context"
-	"fmt"
 	"github.com/comp1x/final-task/restaurant/pkg/models"
 	"github.com/google/uuid"
 	"gitlab.com/mediasoft-internship/final-task/contracts/pkg/contracts/statistics"
@@ -10,7 +9,6 @@ import (
 	"google.golang.org/grpc/status"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
 	"sort"
 )
 
@@ -22,7 +20,7 @@ type StatisticsService struct {
 func New(dbURL string) (*StatisticsService, error) {
 	db, err := gorm.Open(postgres.Open(dbURL), &gorm.Config{})
 	if err != nil {
-		return nil, fmt.Errorf("ошибка при подключении к базе данных: %w", err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 
 	return &StatisticsService{
@@ -42,16 +40,14 @@ func (s *StatisticsService) GetAmountOfProfit(
 
 	var orders []models.Order
 	if err := s.db.Where("created_at BETWEEN ? AND ?", timeStart, timeEnd).Find(&orders).Error; err != nil {
-		log.Printf("ошибка при получении заказов из базы данных: %v", err)
-		return nil, fmt.Errorf("ошибка при получении списка заказов")
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	var profit float64
 
 	for _, order := range orders {
 		var product *models.Product
 		if err := s.db.Select("price").First(&product, order.ProductUuid).Error; err != nil {
-			log.Printf("ошибка при получении продуктов из базы данных: %v", err)
-			return nil, fmt.Errorf("ошибка при запросе к бд по продукту")
+			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 		profit += product.Price * float64(order.Count)
 	}
@@ -71,27 +67,23 @@ func (s *StatisticsService) TopProducts(
 		timeEnd := request.GetEndDate().AsTime()
 
 		if err := s.db.Where("created_at BETWEEN ? AND ?", timeStart, timeEnd).Find(&orders).Error; err != nil {
-			log.Printf("ошибка при получении заказов из базы данных: %v", err)
-			return nil, fmt.Errorf("ошибка при получении списка заказов")
+			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 	} else if request.StartDate != nil && request.EndDate == nil {
 		timeStart := request.GetStartDate().AsTime()
 
 		if err := s.db.Where("created_at > ?", timeStart).Find(&orders).Error; err != nil {
-			log.Printf("ошибка при получении заказов из базы данных: %v", err)
-			return nil, fmt.Errorf("ошибка при получении списка заказов")
+			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 	} else if request.EndDate != nil && request.StartDate == nil {
 		timeEnd := request.GetStartDate().AsTime()
 
 		if err := s.db.Where("created_at < ?", timeEnd).Find(&orders).Error; err != nil {
-			log.Printf("ошибка при получении заказов из базы данных: %v", err)
-			return nil, fmt.Errorf("ошибка при получении списка заказов")
+			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 	} else if request.EndDate == nil && request.StartDate == nil {
 		if err := s.db.Find(&orders).Error; err != nil {
-			log.Printf("ошибка при получении заказов из базы данных: %v", err)
-			return nil, fmt.Errorf("ошибка при получении списка заказов")
+			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 	}
 
@@ -112,8 +104,7 @@ func (s *StatisticsService) TopProducts(
 	for _, productWithCount := range productCounts {
 		var product *models.Product
 		if err := s.db.Select("name", "type").First(&product, productWithCount.ProductUUID).Error; err != nil {
-			log.Printf("ошибка при получении продукта из базы данных: %v", err)
-			return nil, fmt.Errorf("ошибка при запросе к бд по продукту")
+			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 		apiProduct := &statistics.Product{
 			Uuid:        productWithCount.ProductUUID.String(),

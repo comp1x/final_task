@@ -2,7 +2,6 @@ package orderrepositoryimport
 
 import (
 	"context"
-	"fmt"
 	"github.com/caarlos0/env"
 	"github.com/comp1x/final-task/customer/pkg/config"
 	"github.com/comp1x/final-task/restaurant/pkg/models"
@@ -29,7 +28,7 @@ type OrderService struct {
 func New(dbURL string) (*OrderService, error) {
 	db, err := gorm.Open(postgres.Open(dbURL), &gorm.Config{})
 	if err != nil {
-		return nil, fmt.Errorf("ошибка при подключении к базе данных: %w", err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 
 	return &OrderService{
@@ -44,7 +43,7 @@ func (s *OrderService) CreateOrder(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	Orders := []*models.Order{}
+	var Orders []*models.Order
 	for _, OrderItem := range request.Salads {
 		ProductUuid, err := uuid.Parse(OrderItem.ProductUuid)
 		if err != nil {
@@ -131,8 +130,7 @@ func (s *OrderService) CreateOrder(
 	}
 	for _, order := range Orders {
 		if err := s.db.Table("orders").Create(order).Error; err != nil {
-			log.Printf("ошибка при создании заказа в базе данных: %v", err)
-			return nil, fmt.Errorf("ошибка при создании заказа")
+			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 	}
 
@@ -168,12 +166,12 @@ func (s *OrderService) GetActualMenu(
 		OnDate: timestamppb.New(tomorrow),
 	}
 
-	result, err := client.GetMenu(context.Background(), requestGetMenu)
+	result, err := client.GetMenu(ctx, requestGetMenu)
 
 	conn.Close()
 
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 
 	apiSalads := make([]*customer.Product, 0, len(result.Menu.Salads))

@@ -25,6 +25,6 @@ func main() {
 	}
 
 	if err := app.Run(cfg); err != nil {
-		log.Fatal("error running gateway server ", err)
+		log.Fatal("error running gateway server: ", err)
 	}
 }

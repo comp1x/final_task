@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"github.com/caarlos0/env"
 	"github.com/comp1x/final-task/restaurant/pkg/config"
 	"github.com/comp1x/final-task/restaurant/pkg/repositories/menurepository"
 	"github.com/comp1x/final-task/restaurant/pkg/repositories/orderrepository"
@@ -35,16 +34,6 @@ func Run(cfg config.Config) error {
 }
 
 func runGRPCServer(cfg config.Config, s *grpc.Server) {
-	if err := env.Parse(&cfg.DB); err != nil {
-		log.Fatalf("failed to retrieve env variables, %v", err)
-	}
-	if err := env.Parse(&cfg.Restaurant); err != nil {
-		log.Fatalf("failed to retrieve env variables, %v", err)
-	}
-	if err := env.Parse(&cfg.Customer); err != nil {
-		log.Fatalf("failed to retrieve env variables, %v", err)
-	}
-
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
 		cfg.DB.PgHost, cfg.DB.PgUser, cfg.DB.PgPwd, cfg.DB.PgDBName, cfg.DB.PgPort,
@@ -61,11 +50,6 @@ func runGRPCServer(cfg config.Config, s *grpc.Server) {
 	OrderServiceServer, err := orderrepository.New(dsn)
 	if err != nil {
 		log.Fatalf("ошибка при создании MenuService: %v", err)
-	}
-
-	if err != nil {
-		log.Fatalf(
-			"ошибка при создании UserService: %v", err)
 	}
 
 	restaurant.RegisterProductServiceServer(s, ProductServiceServer)

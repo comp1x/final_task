@@ -43,6 +43,6 @@ func main() {
 	if err != nil {
 		log.Fatal("problem with migration ", err)
 	} else {
-		fmt.Println("Migration complete")
+		fmt.Println("Migration customer completed")
 	}
 }

@@ -56,7 +56,7 @@ func main() {
 		"acks":              "all",
 	})
 	if err != nil {
-		fmt.Println("Failed to create producer: %s\n", err)
+		log.Fatal("failed when create kafka producer: ", err)
 	}
 
 	jsonPayload := `{
@@ -72,14 +72,13 @@ func main() {
 	var request customer.CreateOrderRequest
 
 	if err := json.Unmarshal([]byte(jsonPayload), &request); err != nil {
-		fmt.Println("Error unmarshaling JSON:", err)
-		return
+		log.Fatal("failed with unmarshalling request: ", err)
 	}
 
 	op := NewOrderPlacer(p, "orders")
 	for i := 0; i < 1000; i++ {
 		if err := op.placeOrder(request); err != nil {
-			log.Fatal(err)
+			log.Fatal("failed when place order: ", err)
 		}
 		fmt.Println("added in kafka req №" + strconv.Itoa(i))
 		time.Sleep(time.Millisecond * 100)

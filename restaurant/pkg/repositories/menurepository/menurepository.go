@@ -2,7 +2,6 @@ package menurepository
 
 import (
 	"context"
-	"fmt"
 	"github.com/comp1x/final-task/restaurant/pkg/models"
 	"gitlab.com/mediasoft-internship/final-task/contracts/pkg/contracts/restaurant"
 	"google.golang.org/grpc/codes"
@@ -10,7 +9,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
 )
 
 type MenuService struct {
@@ -22,7 +20,7 @@ type MenuService struct {
 func New(dbURL string) (*MenuService, error) {
 	db, err := gorm.Open(postgres.Open(dbURL), &gorm.Config{})
 	if err != nil {
-		return nil, fmt.Errorf("ошибка при подключении к базе данных: %w", err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 
 	return &MenuService{
@@ -33,7 +31,12 @@ func New(dbURL string) (*MenuService, error) {
 func (s *MenuService) CreateMenu(
 	ctx context.Context, request *restaurant.CreateMenuRequest,
 ) (*restaurant.CreateMenuResponse, error) {
+	if err := request.ValidateAll(); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
 	var ProductsUuids []string
+
 	ProductsUuids = append(ProductsUuids, request.Salads...)
 	ProductsUuids = append(ProductsUuids, request.Garnishes...)
 	ProductsUuids = append(ProductsUuids, request.Meats...)
@@ -52,8 +55,7 @@ func (s *MenuService) CreateMenu(
 	}
 
 	if err := s.db.Create(menu).Error; err != nil {
-		log.Printf("ошибка при создании продукта в базе данных: %v", err)
-		return nil, fmt.Errorf("ошибка при создании продукта")
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	return &restaurant.CreateMenuResponse{}, nil
 }
@@ -69,14 +71,12 @@ func (s *MenuService) GetMenu(
 
 	var menu models.Menu
 	if err := s.db.Where("year = ? AND month = ? AND day = ?", Year, int(Month), Day).First(&menu).Error; err != nil {
-		log.Printf("ошибка при получении меню из базы данных: %v", err)
-		return nil, fmt.Errorf("ошибка при получении меню")
+		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
 	var products []models.Product
 	if err := s.db.Where("id IN ?", []string(menu.ProductsUuids)).Find(&products).Error; err != nil {
-		log.Printf("ошибка при получении списка продуктов из базы данных: %v", err)
-		return nil, fmt.Errorf("ошибка при получении списка офисов")
+		return nil, status.Error(codes.NotFound, err.Error())
 	}
 	apiUnspecified := make([]*restaurant.Product, 0)
 	apiSalads := make([]*restaurant.Product, 0)

@@ -47,7 +47,7 @@ func consumeOrders(cfg config.Config) {
 	})
 
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("failed when create consumer: ", err)
 	}
 
 	err = consumer.Subscribe(cfg.Kafka.Topic, nil)
@@ -64,7 +64,7 @@ func consumeOrders(cfg config.Config) {
 
 			conn, err := grpc.Dial(cfg.Customer.GRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
-				log.Fatal("error connect to grpc server err:", err)
+				log.Fatal("error connect to grpc server err: ", err)
 			}
 
 			client := customer.NewOrderServiceClient(conn)

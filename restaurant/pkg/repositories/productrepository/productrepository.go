@@ -2,7 +2,6 @@ package productrepository
 
 import (
 	"context"
-	"fmt"
 	"github.com/comp1x/final-task/restaurant/pkg/models"
 	_ "github.com/google/uuid"
 	restaurant "gitlab.com/mediasoft-internship/final-task/contracts/pkg/contracts/restaurant"
@@ -11,7 +10,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
 )
 
 type ProductService struct {
@@ -23,7 +21,7 @@ type ProductService struct {
 func New(dbURL string) (*ProductService, error) {
 	db, err := gorm.Open(postgres.Open(dbURL), &gorm.Config{})
 	if err != nil {
-		return nil, fmt.Errorf("ошибка при подключении к базе данных: %w", err)
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 
 	return &ProductService{
@@ -47,8 +45,7 @@ func (s *ProductService) CreateProduct(
 	}
 
 	if err := s.db.Create(product).Error; err != nil {
-		log.Printf("ошибка при создании продукта в базе данных: %v", err)
-		return nil, fmt.Errorf("ошибка при создании продукта")
+		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 
 	return &restaurant.CreateProductResponse{}, nil
@@ -63,8 +60,7 @@ func (s *ProductService) GetProductList(
 
 	var products []models.Product
 	if err := s.db.Find(&products).Error; err != nil {
-		log.Printf("ошибка при получении списка продуктов из базы данных: %v", err)
-		return nil, fmt.Errorf("ошибка при получении списка продуктов")
+		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
 	apiProducts := make([]*restaurant.Product, 0, len(products))
