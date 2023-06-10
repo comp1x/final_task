@@ -39,14 +39,14 @@ func (s *StatisticsService) GetAmountOfProfit(
 	timeEnd := request.GetEndDate().AsTime()
 
 	var orders []models.Order
-	if err := s.db.Where("created_at BETWEEN ? AND ?", timeStart, timeEnd).Find(&orders).Error; err != nil {
+	if err := s.db.WithContext(ctx).Where("created_at BETWEEN ? AND ?", timeStart, timeEnd).Find(&orders).Error; err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	var profit float64
 
 	for _, order := range orders {
 		var product *models.Product
-		if err := s.db.Select("price").First(&product, order.ProductUuid).Error; err != nil {
+		if err := s.db.WithContext(ctx).Select("price").First(&product, order.ProductUuid).Error; err != nil {
 			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 		profit += product.Price * float64(order.Count)
@@ -66,23 +66,23 @@ func (s *StatisticsService) TopProducts(
 		timeStart := request.GetStartDate().AsTime()
 		timeEnd := request.GetEndDate().AsTime()
 
-		if err := s.db.Where("created_at BETWEEN ? AND ?", timeStart, timeEnd).Find(&orders).Error; err != nil {
+		if err := s.db.WithContext(ctx).Where("created_at BETWEEN ? AND ?", timeStart, timeEnd).Find(&orders).Error; err != nil {
 			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 	} else if request.StartDate != nil && request.EndDate == nil {
 		timeStart := request.GetStartDate().AsTime()
 
-		if err := s.db.Where("created_at > ?", timeStart).Find(&orders).Error; err != nil {
+		if err := s.db.WithContext(ctx).Where("created_at > ?", timeStart).Find(&orders).Error; err != nil {
 			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 	} else if request.EndDate != nil && request.StartDate == nil {
 		timeEnd := request.GetStartDate().AsTime()
 
-		if err := s.db.Where("created_at < ?", timeEnd).Find(&orders).Error; err != nil {
+		if err := s.db.WithContext(ctx).Where("created_at < ?", timeEnd).Find(&orders).Error; err != nil {
 			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 	} else if request.EndDate == nil && request.StartDate == nil {
-		if err := s.db.Find(&orders).Error; err != nil {
+		if err := s.db.WithContext(ctx).Find(&orders).Error; err != nil {
 			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 	}
@@ -95,7 +95,10 @@ func (s *StatisticsService) TopProducts(
 
 	var productCounts []ProductCount
 	for key, value := range productsMap {
-		productCounts = append(productCounts, ProductCount{key, value})
+		productCounts = append(productCounts, ProductCount{
+			key,
+			value,
+		})
 	}
 
 	sort.Sort(ByCountDesc(productCounts))
@@ -103,7 +106,7 @@ func (s *StatisticsService) TopProducts(
 	apiProducts := make([]*statistics.Product, 0, len(productsMap))
 	for _, productWithCount := range productCounts {
 		var product *models.Product
-		if err := s.db.Select("name", "type").First(&product, productWithCount.ProductUUID).Error; err != nil {
+		if err := s.db.WithContext(ctx).Select("name", "type").First(&product, productWithCount.ProductUUID).Error; err != nil {
 			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 		apiProduct := &statistics.Product{

@@ -31,14 +31,14 @@ func Run(cfg config.Config) error {
 
 	go runHTTPServer(ctx, cfg, mux)
 
-	go consumeOrders(cfg)
+	go consumeOrders(ctx, cfg)
 
 	gracefulShutDown(s, cancel)
 
 	return nil
 }
 
-func consumeOrders(cfg config.Config) {
+func consumeOrders(ctx context.Context, cfg config.Config) {
 	time.Sleep(time.Second * 5)
 	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": cfg.Kafka.Host + ":" + cfg.Kafka.Port,
@@ -76,7 +76,7 @@ func consumeOrders(cfg config.Config) {
 				log.Fatal(err)
 			}
 
-			_, err = client.CreateOrder(context.Background(), &orderReq)
+			_, err = client.CreateOrder(ctx, &orderReq)
 
 			if err != nil {
 				log.Fatal(err)

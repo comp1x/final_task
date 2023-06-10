@@ -70,7 +70,7 @@ func TestGetOffice(t *testing.T) {
 	}
 	client := customer.NewOfficeServiceClient(conn)
 
-	_, err = client.GetOfficeList(context.Background(), &customer.GetOfficeListRequest{})
+	_, err = client.GetOfficeList(ctx, &customer.GetOfficeListRequest{})
 	if err != nil {
 		t.Fatalf("client.GetOfficeList %v", err)
 	}

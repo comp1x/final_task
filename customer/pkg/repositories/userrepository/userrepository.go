@@ -47,7 +47,7 @@ func (s *UserService) CreateUser(
 		OfficeUuid: UuidFormatFromString,
 	}
 
-	if err = s.db.Create(user).Error; err != nil {
+	if err = s.db.WithContext(ctx).Create(user).Error; err != nil {
 		return nil, status.Error(codes.Unknown, err.Error())
 	}
 
@@ -68,13 +68,13 @@ func (s *UserService) GetUserList(
 
 	var CurrentOffice models.Office
 
-	if err := s.db.WithContext(ctx).Find(&CurrentOffice).Where("id = ?", UuidFormatFromString).Error; err != nil {
+	if err := s.db.WithContext(ctx).Where("id = ?", UuidFormatFromString).Find(&CurrentOffice).Error; err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 
 	var users []models.User
 
-	if err := s.db.Find(&users).Where("office_uuid = ?", UuidFormatFromString).Error; err != nil {
+	if err := s.db.WithContext(ctx).Where("office_uuid = ?", UuidFormatFromString).Find(&users).Error; err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 

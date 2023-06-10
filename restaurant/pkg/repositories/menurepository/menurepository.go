@@ -54,7 +54,7 @@ func (s *MenuService) CreateMenu(
 		ProductsUuids:   ProductsUuids,
 	}
 
-	if err := s.db.Create(menu).Error; err != nil {
+	if err := s.db.WithContext(ctx).Create(menu).Error; err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 	return &restaurant.CreateMenuResponse{}, nil
@@ -70,12 +70,12 @@ func (s *MenuService) GetMenu(
 	Year, Month, Day := request.GetOnDate().AsTime().Date()
 
 	var menu models.Menu
-	if err := s.db.Where("year = ? AND month = ? AND day = ?", Year, int(Month), Day).First(&menu).Error; err != nil {
+	if err := s.db.WithContext(ctx).Where("year = ? AND month = ? AND day = ?", Year, int(Month), Day).First(&menu).Error; err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
 	var products []models.Product
-	if err := s.db.Where("id IN ?", []string(menu.ProductsUuids)).Find(&products).Error; err != nil {
+	if err := s.db.WithContext(ctx).Where("id IN ?", []string(menu.ProductsUuids)).Find(&products).Error; err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 	apiUnspecified := make([]*restaurant.Product, 0)

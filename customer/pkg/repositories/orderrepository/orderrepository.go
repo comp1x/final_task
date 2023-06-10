@@ -129,7 +129,7 @@ func (s *OrderService) CreateOrder(
 		Orders = append(Orders, order)
 	}
 	for _, order := range Orders {
-		if err := s.db.Table("orders").Create(order).Error; err != nil {
+		if err := s.db.WithContext(ctx).Create(order).Error; err != nil {
 			return nil, status.Error(codes.Unavailable, err.Error())
 		}
 	}

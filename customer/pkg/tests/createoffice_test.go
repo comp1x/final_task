@@ -70,7 +70,7 @@ func TestCreateOffice(t *testing.T) {
 	}
 	client := customer.NewOfficeServiceClient(conn)
 
-	_, err = client.CreateOffice(context.Background(), &customer.CreateOfficeRequest{
+	_, err = client.CreateOffice(ctx, &customer.CreateOfficeRequest{
 		Name:    "mediasoft",
 		Address: "gagarina dom 3",
 	})

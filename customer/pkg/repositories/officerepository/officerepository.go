@@ -13,7 +13,6 @@ import (
 
 type OfficeService struct {
 	customer.UnimplementedOfficeServiceServer
-
 	db *gorm.DB
 }
 
@@ -41,7 +40,7 @@ func (s *OfficeService) CreateOffice(
 		//CreatedAt: TimeToTimestamp(time.Now()),
 	}
 
-	if err := s.db.Create(office).Error; err != nil {
+	if err := s.db.WithContext(ctx).Create(office).Error; err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 
@@ -56,7 +55,7 @@ func (s *OfficeService) GetOfficeList(
 	}
 
 	var offices []models.Office
-	if err := s.db.Find(&offices).Error; err != nil {
+	if err := s.db.WithContext(ctx).Find(&offices).Error; err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 

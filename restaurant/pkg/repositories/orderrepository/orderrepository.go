@@ -36,7 +36,7 @@ func (s *OrderService) GetUpToDateOrderList(
 	}
 
 	var orders []models.Order
-	if err := s.db.Find(&orders).Error; err != nil {
+	if err := s.db.Preload("Product").Find(&orders).Error; err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
@@ -59,22 +59,32 @@ func (s *OrderService) GetUpToDateOrderList(
 
 	for _, office := range offices {
 		apiOrdersByCompany := make([]*restaurant.Order, 0)
-		var orders []models.Order
-		err := s.db.Where(&models.Order{
-			User: modelsCustomer.User{
-				OfficeUuid: office.ID,
-			},
-		}).Find(&orders).Error
+		var curUsers []modelsCustomer.User
+		err := s.db.Where(&modelsCustomer.User{
+			OfficeUuid: office.ID,
+		}).Find(&curUsers).Error
 		if err != nil {
 			return nil, status.Error(codes.NotFound, err.Error())
 		}
-		for _, order := range orders {
-			apiOrder := &restaurant.Order{
-				ProductId:   order.ProductUuid.String(),
-				ProductName: order.Product.Name,
-				Count:       order.Count,
+		for _, user := range curUsers {
+
+			var curOrders []models.Order
+			err := s.db.Preload("Product").Where(&models.Order{
+				UserUuid: user.ID,
+			}).Find(&curOrders).Error
+
+			if err != nil {
+				return nil, status.Error(codes.NotFound, err.Error())
 			}
-			apiOrdersByCompany = append(apiOrdersByCompany, apiOrder)
+
+			for _, order := range curOrders {
+				apiOrder := &restaurant.Order{
+					ProductId:   order.ProductUuid.String(),
+					ProductName: order.Product.Name,
+					Count:       order.Count,
+				}
+				apiOrdersByCompany = append(apiOrdersByCompany, apiOrder)
+			}
 		}
 		apiOrdersByOffice = append(apiOrdersByOffice, &restaurant.OrdersByOffice{
 			OfficeUuid:    office.ID.String(),

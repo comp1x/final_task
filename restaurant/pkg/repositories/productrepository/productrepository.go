@@ -44,7 +44,7 @@ func (s *ProductService) CreateProduct(
 		Price:       request.Price,
 	}
 
-	if err := s.db.Create(product).Error; err != nil {
+	if err := s.db.WithContext(ctx).Create(product).Error; err != nil {
 		return nil, status.Error(codes.Unavailable, err.Error())
 	}
 
@@ -59,7 +59,7 @@ func (s *ProductService) GetProductList(
 	}
 
 	var products []models.Product
-	if err := s.db.Find(&products).Error; err != nil {
+	if err := s.db.WithContext(ctx).Find(&products).Error; err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
