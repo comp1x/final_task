@@ -9,11 +9,11 @@ import (
 	userrepository "github.com/comp1x/final-task/customer/pkg/repositories/userrepository"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/sirupsen/logrus"
 	customer "gitlab.com/mediasoft-internship/final-task/contracts/pkg/contracts/customer"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/proto"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -22,23 +22,23 @@ import (
 	"time"
 )
 
-func Run(cfg config.Config) error {
+func Run(cfg config.Config, log logrus.FieldLogger) error {
 	s := grpc.NewServer()
 	mux := runtime.NewServeMux()
 	ctx, cancel := context.WithCancel(context.Background())
 
-	go runGRPCServer(cfg, s)
+	go runGRPCServer(cfg, s, log)
 
-	go runHTTPServer(ctx, cfg, mux)
+	go runHTTPServer(ctx, log, cfg, mux)
 
-	go consumeOrders(ctx, cfg)
+	go consumeOrders(ctx, cfg, log)
 
-	gracefulShutDown(s, cancel)
+	gracefulShutDown(s, cancel, log)
 
 	return nil
 }
 
-func consumeOrders(ctx context.Context, cfg config.Config) {
+func consumeOrders(ctx context.Context, cfg config.Config, log logrus.FieldLogger) {
 	time.Sleep(time.Second * 5)
 	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers": cfg.Kafka.Host + ":" + cfg.Kafka.Port,
@@ -64,7 +64,7 @@ func consumeOrders(ctx context.Context, cfg config.Config) {
 
 			conn, err := grpc.Dial(cfg.Customer.GRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
-				log.Fatal("error connect to grpc server err: ", err)
+				log.Fatal("error connect to grpc server err: ", err, time.Now().UTC())
 			}
 
 			client := customer.NewOrderServiceClient(conn)
@@ -72,14 +72,15 @@ func consumeOrders(ctx context.Context, cfg config.Config) {
 			orderReq := customer.CreateOrderRequest{}
 
 			if err := proto.Unmarshal(e.Value, &orderReq); err != nil {
-				fmt.Println("Error unmarshaling protobuf:", err)
-				log.Fatal(err)
+				log.Println("Error unmarshaling protobuf:", err, time.Now().UTC())
+				log.Fatal(err, time.Now().UTC())
 			}
 
 			_, err = client.CreateOrder(ctx, &orderReq)
 
 			if err != nil {
-				log.Fatal(err)
+				log.Println("Error creating order:", err, time.Now().UTC())
+				log.Fatal(err, time.Now().UTC())
 			}
 
 			conn.Close()
@@ -87,22 +88,22 @@ func consumeOrders(ctx context.Context, cfg config.Config) {
 	}
 }
 
-func runGRPCServer(cfg config.Config, s *grpc.Server) {
+func runGRPCServer(cfg config.Config, s *grpc.Server, log logrus.FieldLogger) {
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
 		cfg.DB.PgHost, cfg.DB.PgUser, cfg.DB.PgPwd, cfg.DB.PgDBName, cfg.DB.PgPort,
 	)
-	OfficeServiceServer, err := officerepository.New(dsn)
+	OfficeServiceServer, err := officerepository.New(dsn, log)
 	if err != nil {
 		log.Fatalf("ошибка при создании OfficeService: %v", err)
 	}
 
-	UserServiceServer, err := userrepository.New(dsn)
+	UserServiceServer, err := userrepository.New(dsn, log)
 	if err != nil {
 		log.Fatalf("ошибка при создании UserService: %v", err)
 	}
 
-	OrderServiceServer, err := orderrepository.New(dsn)
+	OrderServiceServer, err := orderrepository.New(dsn, log)
 
 	if err != nil {
 		log.Fatalf("ошибка при создании OrderService: %v", err)
@@ -123,7 +124,7 @@ func runGRPCServer(cfg config.Config, s *grpc.Server) {
 }
 
 func runHTTPServer(
-	ctx context.Context, cfg config.Config, mux *runtime.ServeMux,
+	ctx context.Context, log logrus.FieldLogger, cfg config.Config, mux *runtime.ServeMux,
 ) {
 	err := customer.RegisterOfficeServiceHandlerFromEndpoint(
 		ctx,
@@ -162,7 +163,7 @@ func runHTTPServer(
 	}
 }
 
-func gracefulShutDown(s *grpc.Server, cancel context.CancelFunc) {
+func gracefulShutDown(s *grpc.Server, cancel context.CancelFunc, log logrus.FieldLogger) {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
 	defer signal.Stop(ch)

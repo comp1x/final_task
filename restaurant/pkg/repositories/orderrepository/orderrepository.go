@@ -36,11 +36,12 @@ func (s *OrderService) GetUpToDateOrderList(
 	}
 
 	var orders []models.Order
-	if err := s.db.Preload("Product").Find(&orders).Error; err != nil {
+	if err := s.db.WithContext(ctx).Preload("Product").Find(&orders).Error; err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
 	apiTotalOrders := make([]*restaurant.Order, 0)
+
 	for _, order := range orders {
 		apiOrder := &restaurant.Order{
 			ProductId:   order.ProductUuid.String(),
@@ -51,7 +52,8 @@ func (s *OrderService) GetUpToDateOrderList(
 	}
 
 	var offices []modelsCustomer.Office
-	if err := s.db.Find(&offices).Error; err != nil {
+
+	if err := s.db.WithContext(ctx).Find(&offices).Error; err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
@@ -59,17 +61,21 @@ func (s *OrderService) GetUpToDateOrderList(
 
 	for _, office := range offices {
 		apiOrdersByCompany := make([]*restaurant.Order, 0)
+
 		var curUsers []modelsCustomer.User
-		err := s.db.Where(&modelsCustomer.User{
+
+		err := s.db.WithContext(ctx).Where(&modelsCustomer.User{
 			OfficeUuid: office.ID,
 		}).Find(&curUsers).Error
+
 		if err != nil {
 			return nil, status.Error(codes.NotFound, err.Error())
 		}
-		for _, user := range curUsers {
 
+		for _, user := range curUsers {
 			var curOrders []models.Order
-			err := s.db.Preload("Product").Where(&models.Order{
+
+			err := s.db.WithContext(ctx).Preload("Product").Where(&models.Order{
 				UserUuid: user.ID,
 			}).Find(&curOrders).Error
 
