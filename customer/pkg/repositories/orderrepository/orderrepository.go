@@ -2,11 +2,17 @@ package orderrepositoryimport
 
 import (
 	"context"
+	"fmt"
+	"github.com/caarlos0/env"
+	"github.com/comp1x/final-task/customer/pkg/config"
 	"github.com/comp1x/final-task/customer/pkg/models"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	customer "gitlab.com/mediasoft-internship/final-task/contracts/pkg/contracts/customer"
+	"gitlab.com/mediasoft-internship/final-task/contracts/pkg/contracts/restaurant"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/driver/postgres"
@@ -37,7 +43,7 @@ func (s *OrderService) CreateOrder(
 	ctx context.Context, request *customer.CreateOrderRequest,
 ) (*customer.CreateOrderResponse, error) {
 	if err := request.ValidateAll(); err != nil {
-		s.logger.Error("CreateOrder: ", err, time.Now().UTC().UTC())
+		s.logger.Error("CreateOrder: ", err, time.Now().UTC())
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -156,109 +162,124 @@ func (s *OrderService) GetActualMenu(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	Year, Month, Day := time.Now().UTC().Date()
+	cfg := config.Config{}
 
-	var menu models.Menu
-	if err := s.db.WithContext(ctx).Where("year = ? AND month = ? AND day = ?", Year, int(Month), Day+1).First(&menu).Error; err != nil {
-		s.logger.Errorf("GetActualMenu: ", err, time.Now().UTC())
-		return nil, status.Error(codes.Unknown, err.Error())
-	}
-
-	var products []models.Product
-	if err := s.db.WithContext(ctx).Where("id IN ?", []string(menu.ProductsUuids)).Find(&products).Error; err != nil {
+	if err := env.Parse(&cfg.Restaurant); err != nil {
 		s.logger.Error("GetActualMenu: ", err, time.Now().UTC())
-		return nil, status.Error(codes.Unknown, err.Error())
-	}
-	apiUnspecified := make([]*customer.Product, 0)
-	apiSalads := make([]*customer.Product, 0)
-	apiGarnishes := make([]*customer.Product, 0)
-	apiMeats := make([]*customer.Product, 0)
-	apiSoups := make([]*customer.Product, 0)
-	apiDrinks := make([]*customer.Product, 0)
-	apiDesserts := make([]*customer.Product, 0)
-	for _, product := range products {
-		switch product.Type {
-		case 0:
-			apiProduct := &customer.Product{
-				Uuid:        product.ID.String(),
-				Name:        product.Name,
-				Description: product.Description,
-				Type:        product.Type,
-				Weight:      product.Weight,
-				Price:       product.Price,
-				CreatedAt:   timestamppb.New(product.CreatedAt),
-			}
-			apiUnspecified = append(apiUnspecified, apiProduct)
-		case 1:
-			apiProduct := &customer.Product{
-				Uuid:        product.ID.String(),
-				Name:        product.Name,
-				Description: product.Description,
-				Type:        product.Type,
-				Weight:      product.Weight,
-				Price:       product.Price,
-				CreatedAt:   timestamppb.New(product.CreatedAt),
-			}
-			apiSalads = append(apiSalads, apiProduct)
-		case 2:
-			apiProduct := &customer.Product{
-				Uuid:        product.ID.String(),
-				Name:        product.Name,
-				Description: product.Description,
-				Type:        product.Type,
-				Weight:      product.Weight,
-				Price:       product.Price,
-				CreatedAt:   timestamppb.New(product.CreatedAt),
-			}
-			apiGarnishes = append(apiGarnishes, apiProduct)
-		case 3:
-			apiProduct := &customer.Product{
-				Uuid:        product.ID.String(),
-				Name:        product.Name,
-				Description: product.Description,
-				Type:        product.Type,
-				Weight:      product.Weight,
-				Price:       product.Price,
-				CreatedAt:   timestamppb.New(product.CreatedAt),
-			}
-			apiMeats = append(apiMeats, apiProduct)
-		case 4:
-			apiProduct := &customer.Product{
-				Uuid:        product.ID.String(),
-				Name:        product.Name,
-				Description: product.Description,
-				Type:        product.Type,
-				Weight:      product.Weight,
-				Price:       product.Price,
-				CreatedAt:   timestamppb.New(product.CreatedAt),
-			}
-			apiSoups = append(apiSoups, apiProduct)
-		case 5:
-			apiProduct := &customer.Product{
-				Uuid:        product.ID.String(),
-				Name:        product.Name,
-				Description: product.Description,
-				Type:        product.Type,
-				Weight:      product.Weight,
-				Price:       product.Price,
-				CreatedAt:   timestamppb.New(product.CreatedAt),
-			}
-			apiDrinks = append(apiDrinks, apiProduct)
-		case 6:
-			apiProduct := &customer.Product{
-				Uuid:        product.ID.String(),
-				Name:        product.Name,
-				Description: product.Description,
-				Type:        product.Type,
-				Weight:      product.Weight,
-				Price:       product.Price,
-				CreatedAt:   timestamppb.New(product.CreatedAt),
-			}
-			apiDesserts = append(apiDesserts, apiProduct)
-		}
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	s.logger.Println("GetActualMenu: ",
+	var conn *grpc.ClientConn
+
+	conn, err := grpc.Dial(cfg.Restaurant.GRPCAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		s.logger.Error("GetActualMenu: ", err, time.Now().UTC())
+		return nil, err
+	}
+
+	yyyy, mm, dd := time.Now().Date()
+	tomorrow := time.Date(yyyy, mm, dd+1, 10, 0, 0, 0, time.Now().Location())
+
+	client := restaurant.NewMenuServiceClient(conn)
+
+	requestGetMenu := &restaurant.GetMenuRequest{
+		OnDate: timestamppb.New(tomorrow),
+	}
+
+	result, err := client.GetMenu(ctx, requestGetMenu)
+
+	conn.Close()
+
+	if err != nil {
+		s.logger.Error("GetActualMenu: ", err, time.Now().UTC())
+		return nil, fmt.Errorf("No menu on tomorrow or restaurant service is down.")
+	}
+
+	apiSalads := make([]*customer.Product, 0, len(result.Menu.Salads))
+	for _, product := range result.Menu.Salads {
+		apiSalad := &customer.Product{
+			Uuid:        product.Uuid,
+			Name:        product.Name,
+			Description: product.Description,
+			Type:        customer.CustomerProductType(product.Type),
+			Weight:      product.Weight,
+			Price:       product.Price,
+			CreatedAt:   product.CreatedAt,
+		}
+		apiSalads = append(apiSalads, apiSalad)
+	}
+
+	apiGarnishes := make([]*customer.Product, 0, len(result.Menu.Garnishes))
+	for _, product := range result.Menu.Garnishes {
+		apiGarnish := &customer.Product{
+			Uuid:        product.Uuid,
+			Name:        product.Name,
+			Description: product.Description,
+			Type:        customer.CustomerProductType(product.Type),
+			Weight:      product.Weight,
+			Price:       product.Price,
+			CreatedAt:   product.CreatedAt,
+		}
+		apiGarnishes = append(apiGarnishes, apiGarnish)
+	}
+
+	apiMeats := make([]*customer.Product, 0, len(result.Menu.Meats))
+	for _, product := range result.Menu.Meats {
+		apiMeat := &customer.Product{
+			Uuid:        product.Uuid,
+			Name:        product.Name,
+			Description: product.Description,
+			Type:        customer.CustomerProductType(product.Type),
+			Weight:      product.Weight,
+			Price:       product.Price,
+			CreatedAt:   product.CreatedAt,
+		}
+		apiMeats = append(apiSalads, apiMeat)
+	}
+
+	apiSoups := make([]*customer.Product, 0, len(result.Menu.Soups))
+	for _, product := range result.Menu.Soups {
+		apiSoup := &customer.Product{
+			Uuid:        product.Uuid,
+			Name:        product.Name,
+			Description: product.Description,
+			Type:        customer.CustomerProductType(product.Type),
+			Weight:      product.Weight,
+			Price:       product.Price,
+			CreatedAt:   product.CreatedAt,
+		}
+		apiSoups = append(apiSoups, apiSoup)
+	}
+
+	apiDrinks := make([]*customer.Product, 0, len(result.Menu.Drinks))
+	for _, product := range result.Menu.Drinks {
+		apiDrink := &customer.Product{
+			Uuid:        product.Uuid,
+			Name:        product.Name,
+			Description: product.Description,
+			Type:        customer.CustomerProductType(product.Type),
+			Weight:      product.Weight,
+			Price:       product.Price,
+			CreatedAt:   product.CreatedAt,
+		}
+		apiDrinks = append(apiDrinks, apiDrink)
+	}
+
+	apiDesserts := make([]*customer.Product, 0, len(result.Menu.Desserts))
+	for _, product := range result.Menu.Desserts {
+		apiDessert := &customer.Product{
+			Uuid:        product.Uuid,
+			Name:        product.Name,
+			Description: product.Description,
+			Type:        customer.CustomerProductType(product.Type),
+			Weight:      product.Weight,
+			Price:       product.Price,
+			CreatedAt:   product.CreatedAt,
+		}
+		apiDesserts = append(apiDesserts, apiDessert)
+	}
+
+	s.logger.Error("GetActualMenu: ",
 		apiSalads,
 		apiGarnishes,
 		apiMeats,
