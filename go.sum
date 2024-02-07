@@ -140,7 +140,7 @@ github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO
 github.com/stretchr/testify v1.8.2 h1:+h33VjcLVPDHtOdpUCuF+7gSuG3yGIftsP1YvFihtJ8=
 github.com/stretchr/testify v1.8.2/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
-gitlab.com/mediasoft-internship/final-task/contracts v0.3.0 h1:gA41KPFjM05uR6NTmP0E8REso5S75JdnlFHEsnAaLjY=
+gitlab.com/mediasoft-internship/final-task/contracts v0.3.0 h1:yXqNaZTs03KTTiGZ//+Lq2jf6nju+0+gOOwPSTwf/WI=
 gitlab.com/mediasoft-internship/final-task/contracts v0.3.0/go.mod h1:1N/LyMucewgcWLVES/0dO7b4IuFHHZM0CzigLs5fSqw=
 go.opentelemetry.io/proto/otlp v0.7.0/go.mod h1:PqfVotwruBrMGOCsRd/89rSnXhoiJIqeYNgFYFoEGnI=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
